@@ -12,6 +12,7 @@
     "nodemon": "^1.19.3"
   },
   "scripts": {
+    "start": "node src/index.js",
     "live": "nodemon src/index.js"
   }
 }
