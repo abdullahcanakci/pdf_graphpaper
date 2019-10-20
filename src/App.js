@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import socketIO from 'socket.io-client'
 
 const PageInfo = ({ state, setState }) => {
   const pageinfo = state.pageinfo;
@@ -147,42 +148,67 @@ const GridInfo = ({ state, setState }) => {
   );
 };
 
-function App() {
-  const [state, setState] = useState({
-    pageinfo: {
-      page_size: "",
-      page_margin: 0,
-      division: false,
-      division_amount: 0,
-      division_margin: 0
-    },
-    gridinfo: {
-      size: 1,
-      color: "#54c384",
-      subdivide: false,
-      subdivide_number: 0,
-      subdivide_color: "#a341b7"
+class App extends React.Component{
+  constructor() {
+    super()
+    this.state = {
+      response: '',
+      endpoint: '/',
+      properties: {
+        pageinfo: {
+          page_size: "",
+          page_margin: 0,
+          division: false,
+          division_amount: 0,
+          division_margin: 0
+        },
+        gridinfo: {
+          size: 1,
+          color: "#54c384",
+          subdivide: false,
+          subdivide_number: 0,
+          subdivide_color: "#a341b7"
+        }
+      }
     }
-  });
+    this.updatePagePropState = this.updatePagePropState.bind(this)
+    this.sendPageProps = this.sendPageProps.bind(this)
+  }
 
-  const onStateChange = update => {
-    setState({ ...state, update });
-    console.log(state);
-  };
+  componentDidMount() {
+    const {endpoint} = this.state
+    this.socket = socketIO(endpoint)
+    this.socket.on('pdf', data => this.setState({response: data}))
+  }
 
-  return (
-    <div>
-      <form>
-        <PageInfo state={state} setState={setState} />
-        <GridInfo state={state} setState={setState} />
-      </form>
-      <button
-        onClick={e => console.log(state)}
-      >
-        Generate
-      </button>
-    </div>
-  );
+  updatePagePropState(newState) {
+    this.setState({properties: newState})
+  }
+
+  sendPageProps(e) {
+    e.preventDefault()
+    console.log(this.state.properties)
+    this.socket.emit('page_properties', this.state.properties)
+  }
+
+  render() {
+    const {properties} = this.state
+
+    return (
+      <div>
+        <form>
+          <PageInfo state={properties} setState={this.updatePagePropState} />
+          <GridInfo state={properties} setState={this.updatePagePropState} />
+        </form>
+        <button
+          onClick={this.sendPageProps}
+        >
+          Generate
+        </button>
+        <a href={this.state.response}>Link</a>
+      </div>
+    )
+  }
 }
 
 export default App;
