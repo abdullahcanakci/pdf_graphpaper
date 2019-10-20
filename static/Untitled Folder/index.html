@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Socket.IO chat</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frow@3/dist/frow.min.css">
+  <script type="application/javascript" src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+  <div class="frow-container">
+    <form>
+      <label>
+        Primary color
+        <input id="color_primary" type="color" />
+      </label>
+      <label>
+        Secondary Color
+        <input id="color_secondary" type="color" />
+      </label>
+      <label>
+        Primary Grid Size
+        <input id="grid_size_primary" type="number" />
+      </label>
+      <label>
+        Secondary Grid Size
+        <input id="grid_size_secondary" type="number" />
+      </label>
+
+      <div class="frow justify-around">
+        <button id="submit" class="col-xs-3-10" type="submit">Generate</button>
+      </div>
+    </form>
+  </div>
+</body>
+<script type="application/javascript" src="/index.js"></script>
+
+</html>

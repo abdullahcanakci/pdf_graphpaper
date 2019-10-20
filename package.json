@@ -1,0 +1,17 @@
+{
+  "name": "pdf_gen",
+  "version": "0.0.1",
+  "description": "socket.io app",
+  "dependencies": {
+    "express": "^4.17.1",
+    "pdfkit": "^0.10.0",
+    "shortid": "^2.2.15",
+    "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.3"
+  },
+  "scripts": {
+    "live": "nodemon src/index.js"
+  }
+}
