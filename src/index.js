@@ -10,6 +10,22 @@ const fs = require('fs')
 
 const ids = []
 
+const CreateGrid = (doc, props) => {
+  doc.lineWidth(props.lineWidth)
+  for(x = props.leftEdge; x <= props.rightEdge; x += props.interval * 2.83465){
+    for(y = props.topEdge; y <= props.bottomEdge; y += props.interval * 2.83465){
+      doc
+        .moveTo(props.leftEdge, y)
+        .lineTo(props.rightEdge, y)
+    }
+    doc
+      .moveTo(x, props.topEdge)
+      .lineTo(x, props.bottomEdge)
+  }
+  doc.stroke(props.color)
+  doc.save()
+}
+
 const CreatePDF = (props) => {
   const page = props.pageinfo
   const grid = props.gridinfo
@@ -22,19 +38,35 @@ const CreatePDF = (props) => {
   const rightEdge = 210*2.83465 - leftEdge
   const topEdge = (30 + (297/2 -60) % grid.size) * 2.83465
   const bottomEdge = 297 * 2.83465 - topEdge
-  doc.lineWidth(0.5)
-  for( x = leftEdge; x <= rightEdge; x += grid.size * 2.83465) {
-    for( y = topEdge; y <= bottomEdge; y += grid.size * 2.83465) {
-      doc
-        .moveTo(leftEdge, y)
-        .lineTo(rightEdge, y)
-    }
-    doc
-      .moveTo(x, topEdge)
-      .lineTo(x, bottomEdge)
+
+  if(grid.subdivide){
+    const interval = grid.size / grid.subdivide_number
+    CreateGrid(
+      doc, 
+      {
+        leftEdge: leftEdge, 
+        rightEdge: rightEdge, 
+        topEdge: topEdge, 
+        bottomEdge: bottomEdge, 
+        interval: interval, 
+        color: grid.subdivide_color, 
+        lineWidth: 0.3
+      }
+    )
   }
-  doc.stroke(grid.color)
-  doc.save()
+
+  CreateGrid(
+    doc,
+    {
+      leftEdge: leftEdge, 
+      rightEdge: rightEdge, 
+      topEdge: topEdge, 
+      bottomEdge: bottomEdge,
+      interval: grid.size,
+      color: grid.color,
+      lineWidth: 0.5
+    }
+  )
   
   doc.end()
   console.log('PDF generation finished')
