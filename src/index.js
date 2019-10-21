@@ -4,26 +4,55 @@ app.use(express.static('static'))
 var http = require('http').createServer(app)
 var io = require('socket.io')(http)
 
+const SIZES = {
+  A3: [841.89, 1190.55],
+  A4: [595.28, 841.89],
+  A5: [419.53, 595.28],
+  A6: [297.64, 419.53],
+  LEGAL: [612.0, 1008.0],
+  LETTER: [612.0, 792.0],
+};
+
 const PDFDocument = require('pdfkit')
 const shortid = require('shortid')
 const fs = require('fs')
 
 const ids = []
 
-const CreateGrid = (doc, props) => {
+const CreateGrid = (doc, box, props) => {
   doc.lineWidth(props.lineWidth)
-  for(x = props.leftEdge; x <= props.rightEdge; x += props.interval * 2.83465){
-    for(y = props.topEdge; y <= props.bottomEdge; y += props.interval * 2.83465){
+  for(x = box.edgeLeft; x <= box.edgeRight+2; x += props.interval){
+    for(y = box.edgeTop; y <= box.edgeBottom+2; y += props.interval){
       doc
-        .moveTo(props.leftEdge, y)
-        .lineTo(props.rightEdge, y)
+        .moveTo(box.edgeLeft, y)
+        .lineTo(box.edgeRight, y)
     }
     doc
-      .moveTo(x, props.topEdge)
-      .lineTo(x, props.bottomEdge)
+      .moveTo(x, box.edgeTop)
+      .lineTo(x, box.edgeBottom)
   }
   doc.stroke(props.color)
   doc.save()
+}
+
+const mmToPoints = (mm) => {
+  return mm * 2.83465
+}
+
+const CalculateBoundingBox = ({paper, marginTop, marginRight, marginBottom, marginLeft, interval}) => {
+  const paperSize = SIZES[paper.toUpperCase()]
+
+  const intervalPoint = mmToPoints(interval)
+
+  const vertivalOffset = ((paperSize[1] - marginTop - marginBottom) % intervalPoint) / 2
+  const horizontalOffset = ((paperSize[0] - marginLeft - marginRight) % intervalPoint) / 2
+
+  const edgeTop = marginTop + vertivalOffset
+  const edgeBottom = paperSize[1] - marginBottom - vertivalOffset
+  const edgeLeft = marginLeft + horizontalOffset
+  const edgeRight = paperSize[0] - marginRight - horizontalOffset
+
+  return { edgeTop: edgeTop, edgeBottom: edgeBottom, edgeRight: edgeRight, edgeLeft: edgeLeft }
 }
 
 const CreatePDF = (props) => {
@@ -34,37 +63,38 @@ const CreatePDF = (props) => {
   const doc = new PDFDocument({size: 'A4'})
   const filename = `${shortid.generate()}.pdf`
   doc.pipe(fs.createWriteStream(`./static/pdf/${filename}`))
-  const leftEdge = (20 + (210 - 40) % grid.size) * 2.83465
-  const rightEdge = 210*2.83465 - leftEdge
-  const topEdge = (30 + (297/2 -60) % grid.size) * 2.83465
-  const bottomEdge = 297 * 2.83465 - topEdge
+
+  const boundingBox = CalculateBoundingBox({
+    paper: 'A4',
+    marginTop: mmToPoints(20),
+    marginRight: mmToPoints(15),
+    marginBottom: mmToPoints(20),
+    marginLeft: mmToPoints(15),
+    interval: grid.size
+  })
+
+  console.log(boundingBox)
 
   if(grid.subdivide){
-    const interval = grid.size / grid.subdivide_number
+    const interval = mmToPoints(grid.size / grid.subdivide_number)
     CreateGrid(
-      doc, 
+      doc,
+      boundingBox,
       {
-        leftEdge: leftEdge, 
-        rightEdge: rightEdge, 
-        topEdge: topEdge, 
-        bottomEdge: bottomEdge, 
         interval: interval, 
         color: grid.subdivide_color, 
-        lineWidth: 0.3
+        lineWidth: 0.6
       }
     )
   }
 
   CreateGrid(
     doc,
+    boundingBox,
     {
-      leftEdge: leftEdge, 
-      rightEdge: rightEdge, 
-      topEdge: topEdge, 
-      bottomEdge: bottomEdge,
-      interval: grid.size,
+      interval: mmToPoints(grid.size),
       color: grid.color,
-      lineWidth: 0.5
+      lineWidth: 1.2
     }
   )
   
