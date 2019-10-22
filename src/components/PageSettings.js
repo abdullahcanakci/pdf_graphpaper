@@ -13,20 +13,28 @@ const PageSettings = ({ state, setState }) => {
     <div>
       <p>Page Info</p>
       <div>
-        <div>
-          <label>Size</label>
-          <input
-            type="text"
-            value={pageinfo.page_size}
-            onChange={e => {
-              updateState({ ...pageinfo, page_size: e.target.value });
-            }}
-          />
+        <div className="field">
+          <label className="label">Page Size</label>
+          <div className="control is-expanded">
+            <div className="select is-fullwidth">
+              <select
+                value={pageinfo.page_size}
+                onChange={e => {
+                  updateState({...pageinfo, page_size: e.target.value})
+                }}
+              >
+                <option value="A4">A4</option>
+                <option value="A5">A5</option>
+                <option value="Letter">Letter</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label>Vertical Margin</label>
+        <div className="field">
+          <label className="label">Vertical Margin</label>
           <input
+            className="input"
             type="number"
             value={pageinfo.page_margin_vertical}
             onChange={e => {
@@ -38,9 +46,10 @@ const PageSettings = ({ state, setState }) => {
           />
         </div>
 
-        <div>
-          <label>Horizontal Margin</label>
+        <div className="field">
+          <label className="label">Horizontal Margin</label>
           <input
+            className="input"
             type="number"
             value={pageinfo.page_margin_horizontal}
             onChange={e => {
@@ -52,7 +61,9 @@ const PageSettings = ({ state, setState }) => {
           />
         </div>
 
-        <div>
+        <div className="field">
+          <div className="control">
+          <label className="checkbox">
           <input
             type="checkbox"
             checked={pageinfo.multi_grid}
@@ -60,13 +71,15 @@ const PageSettings = ({ state, setState }) => {
               updateState({ ...pageinfo, multi_grid: e.target.checked });
             }}
           />
-          <label>Multiple grids per page</label>
+          Multiple grids per page</label>
+          </div>
         </div>
 
         <div style={collapse}>
-          <div>
-            <label>Number of Grids on Page</label>
+          <div className="field">
+            <label className="label">Number of Grids on Page</label>
             <input
+              className="input"
               type="number"
               value={pageinfo.multi_grid_number}
               onChange={e => {

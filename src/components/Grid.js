@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import GridSettings from './GridSettings'
 import PageSettings from './PageSettings'
 
@@ -47,7 +47,8 @@ class Grid extends React.Component {
   render(){
     const {pageinfo, gridinfo} = this.state
     return (
-      <div>
+      <div className="columns">
+      <div className="column is-three-fifths is-offset-one-fifth">
         <form>
           <PageSettings state={pageinfo} setState={this.updatePagePropState} />
           <GridSettings state={gridinfo} setState={this.updatePagePropState} />
@@ -58,6 +59,7 @@ class Grid extends React.Component {
           Generate
         </button>
         <a href={this.state.downloadLink}>Link</a>
+      </div>
       </div>
     )
   }
