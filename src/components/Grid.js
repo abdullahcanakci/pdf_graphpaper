@@ -44,22 +44,31 @@ class Grid extends React.Component {
     this.socket.emit('pdf_generation_request', {pageinfo: this.state.pageinfo, gridinfo: this.state.gridinfo})
   }
 
+
   render(){
     const {pageinfo, gridinfo} = this.state
+    const visible = {display: this.state.downloadLink == '' ? "none": ""}
     return (
       <div className="columns">
-      <div className="column is-three-fifths is-offset-one-fifth">
-        <form>
-          <PageSettings state={pageinfo} setState={this.updatePagePropState} />
-          <GridSettings state={gridinfo} setState={this.updatePagePropState} />
-        </form>
-        <button
-          onClick={this.sendPageProps}
-        >
-          Generate
-        </button>
-        <a href={this.state.downloadLink}>Link</a>
-      </div>
+        <div className="column is-three-fifths is-offset-one-fifth">
+          <form>
+            <PageSettings state={pageinfo} setState={this.updatePagePropState} />
+            <GridSettings state={gridinfo} setState={this.updatePagePropState} />
+          </form>
+          <div className="buttons is-centered">
+          <button className="button is-primary"
+            onClick={this.sendPageProps}>
+            Generate
+          </button>
+          <button
+            style={visible}
+            type="submit"
+            className="button is-success"
+            onClick={`window.open${this.state.downloadLink}`}>
+            Download
+          </button>
+          </div>
+        </div>
       </div>
     )
   }
