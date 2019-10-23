@@ -11,7 +11,7 @@ class Grid extends React.Component {
       downloadLink: '',
       pageinfo: {
         page_size: "",
-        page_portrait: true,
+        portrait: true,
         page_margin_vertical: 20,
         page_margin_horizontal: 15,
         multi_grid: false,
