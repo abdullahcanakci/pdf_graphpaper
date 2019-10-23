@@ -1,5 +1,6 @@
 var express = require('express')
 var app = express()
+app.use(express.static('static/site'))
 app.use(express.static('static'))
 var http = require('http').createServer(app)
 var io = require('socket.io')(http)
@@ -39,18 +40,18 @@ const mmToPoints = (mm) => {
   return mm * 2.83465
 }
 
-const CalculateBoundingBox = ({paper, marginTop, marginRight, marginBottom, marginLeft, interval}) => {
+const CalculateBoundingBox = ({paper, marginHorizontal, marginVertical, interval}) => {
   const paperSize = SIZES[paper.toUpperCase()]
 
   const intervalPoint = mmToPoints(interval)
 
-  const vertivalOffset = ((paperSize[1] - marginTop - marginBottom) % intervalPoint) / 2
-  const horizontalOffset = ((paperSize[0] - marginLeft - marginRight) % intervalPoint) / 2
+  const vertivalOffset = ((paperSize[1] - 2 * marginVertical) % intervalPoint) / 2
+  const horizontalOffset = ((paperSize[0] - 2 * marginHorizontal) % intervalPoint) / 2
 
-  const edgeTop = marginTop + vertivalOffset
-  const edgeBottom = paperSize[1] - marginBottom - vertivalOffset
-  const edgeLeft = marginLeft + horizontalOffset
-  const edgeRight = paperSize[0] - marginRight - horizontalOffset
+  const edgeTop = marginVertical + vertivalOffset
+  const edgeBottom = paperSize[1] - marginVertical - vertivalOffset
+  const edgeLeft = marginHorizontal + horizontalOffset
+  const edgeRight = paperSize[0] - marginHorizontal - horizontalOffset
 
   return { edgeTop: edgeTop, edgeBottom: edgeBottom, edgeRight: edgeRight, edgeLeft: edgeLeft }
 }
@@ -65,24 +66,22 @@ const CreatePDF = (props) => {
   doc.pipe(fs.createWriteStream(`./static/pdf/${filename}`))
 
   const boundingBox = CalculateBoundingBox({
-    paper: 'A4',
-    marginTop: mmToPoints(20),
-    marginRight: mmToPoints(15),
-    marginBottom: mmToPoints(20),
-    marginLeft: mmToPoints(15),
-    interval: grid.size
+    paper: page.page_size,
+    marginHorizontal: mmToPoints(page.page_margin_horizontal),
+    marginVertical: mmToPoints(page.page_margin_vertical),
+    interval: grid.primary_cell_size
   })
 
   console.log(boundingBox)
 
-  if(grid.subdivide){
-    const interval = mmToPoints(grid.size / grid.subdivide_number)
+  if(grid.secondary_division){
+    const interval = mmToPoints(grid.primary_cell_size / grid.secondary_division_amount)
     CreateGrid(
       doc,
       boundingBox,
       {
         interval: interval, 
-        color: grid.subdivide_color, 
+        color: grid.secondary_color, 
         lineWidth: 0.6
       }
     )
@@ -92,8 +91,8 @@ const CreatePDF = (props) => {
     doc,
     boundingBox,
     {
-      interval: mmToPoints(grid.size),
-      color: grid.color,
+      interval: mmToPoints(grid.primary_cell_size),
+      color: grid.primary_cell_color,
       lineWidth: 1.2
     }
   )
@@ -106,12 +105,12 @@ const CreatePDF = (props) => {
 io.on('connection', (socket) => {
   console.log('a user has connected')
   //User requests a graph creation
-  socket.on('page_properties', (msg) => {
+  socket.on('pdf_generation_request', (msg) => {
     console.log(msg)
     ids[socket.id] = msg
     setTimeout(() => {
       const filename = CreatePDF(msg)
-      socket.emit('pdf', `/pdf/${filename}`)
+      socket.emit('pdf_generation_finished', `/pdf/${filename}`)
     },1000)
   })
 

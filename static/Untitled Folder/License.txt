@@ -1,2 +1,0 @@
-download.js, Easy download assistant, fully thanks to dandavis
-http://danml.com/download.html

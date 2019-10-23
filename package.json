@@ -13,6 +13,7 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "live": "nodemon src/index.js"
+    "live": "nodemon src/index.js",
+    "build": "rm -rf static/site/* && cd ../pdf_frontend/ && npm run build && cp -r build/* ../pdf_backend/static/site"
   }
 }
