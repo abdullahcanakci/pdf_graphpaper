@@ -45,7 +45,7 @@ const PageSettings = ({ state, setState }) => {
             <div className="column is-half">
               <div className="field is-full-width">
                 <label className="label">Orientation</label>
-                <div className="buttons has-addons is-centered">
+                <div className="buttons has-addons is-grouped is-centered">
                   <button
                     className={style_portrait}
                     onClick={e => {

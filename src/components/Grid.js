@@ -10,7 +10,7 @@ class Grid extends React.Component {
     this.state = {
       downloadLink: '',
       pageinfo: {
-        page_size: "",
+        page_size: 'A4',
         portrait: true,
         page_margin_vertical: 20,
         page_margin_horizontal: 15,
@@ -47,7 +47,7 @@ class Grid extends React.Component {
 
   render(){
     const {pageinfo, gridinfo} = this.state
-    const visible = {display: this.state.downloadLink == '' ? "none": ""}
+    const visible = {display: this.state.downloadLink === '' ? "none": ""}
     return (
       <div className="columns">
         <div className="column is-three-fifths is-offset-one-fifth">
@@ -60,13 +60,17 @@ class Grid extends React.Component {
             onClick={this.sendPageProps}>
             Generate
           </button>
-          <button
-            style={visible}
-            type="submit"
-            className="button is-success"
-            onClick={`window.open${this.state.downloadLink}`}>
-            Download
-          </button>
+          <a 
+            href={this.state.downloadLink}
+            download="graphpaper.pdf">
+            <button
+              style={visible}
+              type="submit"
+              className="button is-success"
+            >
+              Download
+            </button>
+          </a>
           </div>
         </div>
       </div>
