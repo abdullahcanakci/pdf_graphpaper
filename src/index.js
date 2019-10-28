@@ -22,8 +22,8 @@ const ids = []
 
 const CreateGrid = (doc, box, props) => {
   doc.lineWidth(props.lineWidth)
-  for(x = box.edgeLeft; x <= box.edgeRight+2; x += props.interval){
-    for(y = box.edgeTop; y <= box.edgeBottom+2; y += props.interval){
+  for(x = box.edgeLeft; x <= box.edgeRight+2; x += props.cellWidth){
+    for(y = box.edgeTop; y <= box.edgeBottom+2; y += props.cellHeight){
       doc
         .moveTo(box.edgeLeft, y)
         .lineTo(box.edgeRight, y)
@@ -40,13 +40,11 @@ const mmToPoints = (mm) => {
   return mm * 2.83465
 }
 
-const CalculateBoundingBox = ({paper, marginHorizontal, marginVertical, interval}) => {
+const CalculateBoundingBox = ({paper, marginHorizontal, marginVertical, cellWidth, cellHeight}) => {
   const paperSize = SIZES[paper.toUpperCase()]
 
-  const intervalPoint = mmToPoints(interval)
-
-  const vertivalOffset = ((paperSize[1] - 2 * marginVertical) % intervalPoint) / 2
-  const horizontalOffset = ((paperSize[0] - 2 * marginHorizontal) % intervalPoint) / 2
+  const vertivalOffset = ((paperSize[1] - 2 * marginVertical) % cellHeight) / 2
+  const horizontalOffset = ((paperSize[0] - 2 * marginHorizontal) % cellWidth) / 2
 
   const edgeTop = marginVertical + vertivalOffset
   const edgeBottom = paperSize[1] - marginVertical - vertivalOffset
@@ -61,7 +59,7 @@ const CreatePDF = (props) => {
   const grid = props.gridinfo
 
   console.log('PDF generation started')
-  const doc = new PDFDocument({size: 'A4'})
+  const doc = new PDFDocument({size: page.page_size})
   const filename = `${shortid.generate()}.pdf`
   doc.pipe(fs.createWriteStream(`./static/pdf/${filename}`))
 
@@ -69,20 +67,21 @@ const CreatePDF = (props) => {
     paper: page.page_size,
     marginHorizontal: mmToPoints(page.page_margin_horizontal),
     marginVertical: mmToPoints(page.page_margin_vertical),
-    interval: grid.primary_cell_size
+    cellWidth: mmToPoints(grid.cell_width),
+    cellHeight: mmToPoints(grid.cell_height)
   })
 
-  console.log(boundingBox)
-
   if(grid.secondary_division){
-    const interval = mmToPoints(grid.primary_cell_size / grid.secondary_division_amount)
+    const cellHeight = mmToPoints(grid.cell_height / grid.secondary_column_number)
+    const cellWidth = mmToPoints(grid.cell_width / grid.secondary_row_number)
     CreateGrid(
       doc,
       boundingBox,
       {
-        interval: interval, 
+        cellWidth: cellWidth,
+        cellHeight: cellHeight,
         color: grid.secondary_color, 
-        lineWidth: 0.6
+        lineWidth: 0.5
       }
     )
   }
@@ -91,8 +90,9 @@ const CreatePDF = (props) => {
     doc,
     boundingBox,
     {
-      interval: mmToPoints(grid.primary_cell_size),
-      color: grid.primary_cell_color,
+      cellWidth: mmToPoints(grid.cell_width),
+      cellHeight: mmToPoints(grid.cell_height),
+      color: grid.cell_color,
       lineWidth: 1.2
     }
   )
@@ -106,7 +106,6 @@ io.on('connection', (socket) => {
   console.log('a user has connected')
   //User requests a graph creation
   socket.on('pdf_generation_request', (msg) => {
-    console.log(msg)
     ids[socket.id] = msg
     setTimeout(() => {
       const filename = CreatePDF(msg)
