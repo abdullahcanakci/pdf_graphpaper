@@ -1,16 +1,15 @@
 var express = require('express')
 var app = express()
+const bodyParser = require('body-parser')
+const path = require('path')
 app.use(express.static('static/site'))
 app.use(express.static('static'))
+app.use(bodyParser.json())
 var http = require('http').createServer(app)
-var io = require('socket.io')(http)
 
 const SIZES = {
-  A3: [841.89, 1190.55],
   A4: [595.28, 841.89],
   A5: [419.53, 595.28],
-  A6: [297.64, 419.53],
-  LEGAL: [612.0, 1008.0],
   LETTER: [612.0, 792.0],
 };
 
@@ -18,12 +17,10 @@ const PDFDocument = require('pdfkit')
 const shortid = require('shortid')
 const fs = require('fs')
 
-const ids = []
-
 const CreateGrid = (doc, box, props) => {
   doc.lineWidth(props.lineWidth)
-  for(x = box.edgeLeft; x <= box.edgeRight+2; x += props.cellWidth){
-    for(y = box.edgeTop; y <= box.edgeBottom+2; y += props.cellHeight){
+  for(x = box.edgeLeft; x <= box.edgeRight+2; x += mmToPoints(props.cellWidth)){
+    for(y = box.edgeTop; y <= box.edgeBottom+2; y += mmToPoints(props.cellHeight)){
       doc
         .moveTo(box.edgeLeft, y)
         .lineTo(box.edgeRight, y)
@@ -43,18 +40,21 @@ const mmToPoints = (mm) => {
 const CalculateBoundingBox = ({paper, marginHorizontal, marginVertical, cellWidth, cellHeight}) => {
   const paperSize = SIZES[paper.toUpperCase()]
 
-  const vertivalOffset = ((paperSize[1] - 2 * marginVertical) % cellHeight) / 2
-  const horizontalOffset = ((paperSize[0] - 2 * marginHorizontal) % cellWidth) / 2
+  const marginVerticalPoints = mmToPoints(marginVertical)
+  const marginHorizontalPoints = mmToPoints(marginHorizontal)
 
-  const edgeTop = marginVertical + vertivalOffset
-  const edgeBottom = paperSize[1] - marginVertical - vertivalOffset
-  const edgeLeft = marginHorizontal + horizontalOffset
-  const edgeRight = paperSize[0] - marginHorizontal - horizontalOffset
+  const vertivalOffset = ((paperSize[1] - 2 * marginVerticalPoints) % mmToPoints(cellHeight)) / 2
+  const horizontalOffset = ((paperSize[0] - 2 * marginHorizontalPoints) % mmToPoints(cellWidth)) / 2
+  
+  const edgeTop = marginVerticalPoints + vertivalOffset
+  const edgeLeft = marginHorizontalPoints + horizontalOffset
+  const edgeRight = paperSize[0] - marginHorizontalPoints - horizontalOffset
+  const edgeBottom = paperSize[1] - marginVerticalPoints - vertivalOffset
 
   return { edgeTop: edgeTop, edgeBottom: edgeBottom, edgeRight: edgeRight, edgeLeft: edgeLeft }
 }
 
-const CreatePDF = (props) => {
+async function CreatePDF(props){
   const page = props.pageinfo
   const grid = props.gridinfo
 
@@ -65,15 +65,16 @@ const CreatePDF = (props) => {
 
   const boundingBox = CalculateBoundingBox({
     paper: page.page_size,
-    marginHorizontal: mmToPoints(page.page_margin_horizontal),
-    marginVertical: mmToPoints(page.page_margin_vertical),
-    cellWidth: mmToPoints(grid.cell_width),
-    cellHeight: mmToPoints(grid.cell_height)
+    marginHorizontal: page.page_margin_horizontal,
+    marginVertical: page.page_margin_vertical,
+    cellWidth: grid.primary_cell_width,
+    cellHeight: grid.primary_cell_height
   })
+  console.log(boundingBox)
 
   if(grid.secondary_division){
-    const cellHeight = mmToPoints(grid.cell_height / grid.secondary_column_number)
-    const cellWidth = mmToPoints(grid.cell_width / grid.secondary_row_number)
+    const cellHeight = grid.primary_cell_height / grid.secondary_division_column
+    const cellWidth = grid.primary_cell_width / grid.secondary_division_row
     CreateGrid(
       doc,
       boundingBox,
@@ -90,10 +91,10 @@ const CreatePDF = (props) => {
     doc,
     boundingBox,
     {
-      cellWidth: mmToPoints(grid.cell_width),
-      cellHeight: mmToPoints(grid.cell_height),
-      color: grid.cell_color,
-      lineWidth: 1.2
+      cellWidth: grid.primary_cell_width,
+      cellHeight: grid.primary_cell_height,
+      color: grid.primary_cell_color,
+      lineWidth: 1.0
     }
   )
   
@@ -102,25 +103,21 @@ const CreatePDF = (props) => {
   return filename
 }
 
-io.on('connection', (socket) => {
-  console.log('a user has connected')
-  //User requests a graph creation
-  socket.on('pdf_generation_request', (msg) => {
-    ids[socket.id] = msg
-    setTimeout(() => {
-      const filename = CreatePDF(msg)
-      socket.emit('pdf_generation_finished', `/pdf/${filename}`)
-    },1000)
-  })
-
-  socket.on('pdf', () => {
-    console.log('PDF' + JSON.stringify(ids[socket.id]))
-    socket.emit('message', "Goodbye" + JSON.stringify(ids[socket.id]))
-  })
-
-  socket.on('disconnect', () => {
-    console.log('user disconnected.')
-  })
+app.post('/api', (req, res, next) => {
+  try{
+    CreatePDF(req.body)
+      .then(link => {
+        res
+          .status(201)
+          .send('/pdf/' + link)
+      })
+      .catch(e => {
+        console.log('an error occured\n' + e)
+      })
+  }
+  catch(e) {
+    next(e)
+  }
 })
 
 http.listen(3000, () => {

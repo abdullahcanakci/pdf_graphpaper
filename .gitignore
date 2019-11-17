@@ -1,3 +1,4 @@
 node_modules
 package-lock.json
-static/pdf
+static/pdf/
+static/site/
