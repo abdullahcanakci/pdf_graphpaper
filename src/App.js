@@ -1,8 +1,6 @@
 import React from "react";
-import socketIO from 'socket.io-client'
-import Grid from './components/Grid'
-const socket = socketIO('/')
-
+import Generate from "./components/Generate";
+import './App.css'
 class App extends React.Component{
   componentDidMount() {
     console.log('app component')
@@ -11,8 +9,10 @@ class App extends React.Component{
 
   render() {
     return (
-      <div className="container">
-        <Grid socket={socket} />
+      <div className="section">
+        <div className="container">
+          <Generate />
+        </div>
       </div>
     )
   }
