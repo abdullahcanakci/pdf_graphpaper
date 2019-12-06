@@ -1,5 +1,11 @@
 A personalized graphpaper generator.
-I created this for personal use, but it is somewhat usable enough to share.
+I created this for personal use, but it is somewhat usable enough to share.![screenshot](screenshot.png)
+
+Orientation is remnant of a older project creates no difference.
+
+CSS framework used is [bulma.io](https://bulma.io/)
+
+Tested on `npm 5.8.0` and `nodejs 10.15.2`.
 
 To use either download repository through github or clone it as below
 
@@ -23,4 +29,4 @@ npm start
 ```
 
 
-There is minimal failsafes in place don't try to break it ;)
+There are minimal failsafes in place, please don't try to break it ;)
